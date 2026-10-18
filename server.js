@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 3000;
 const CLOUD_NAME = "ixdyv04r";
 const PRESET = "ml_default";
 const FOLDER = "aliya";
-const API_KEY = process.env.CLOUDINARY_API_KEY || "423328895529369";
-const API_SECRET = process.env.CLOUDINARY_API_SECRET || "";
+const API_KEY = "423328895529369";
+const API_SECRET = "M0L6a6V5R3U1X7Z9c2V4b8N6m1K"; // Direct hardcoded secret
 const AUTHOR = "Mr.king";
 const AUDIO_EXT = ["mp3", "m4a", "wav", "aac", "ogg", "flac", "opus", "amr", "wma"];
 
@@ -20,12 +20,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// API: Get Media List (Publicly accessible, 100% stable)
+// API: Get Media List
 app.get("/api/list", async (req, res) => {
-  if (!API_SECRET) {
-    return res.json([]);
-  }
-
   const out = [];
   for (const type of ["video", "image"]) {
     try {
@@ -69,7 +65,7 @@ app.get("/api/list", async (req, res) => {
   return res.json(out);
 });
 
-// API: Upload Media (Strictly Mr.king Only)
+// API: Upload Media
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
@@ -98,7 +94,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// API: Delete Media (Strictly Mr.king Only)
+// API: Delete Media
 app.post("/api/delete", async (req, res) => {
   try {
     const { name, resource_type, author } = req.body;
@@ -125,7 +121,7 @@ app.post("/api/delete", async (req, res) => {
   }
 });
 
-// API: Rename Media (Strictly Mr.king Only)
+// API: Rename Media
 app.post("/api/rename", async (req, res) => {
   try {
     const { oldName, newName, resource_type, author } = req.body;
@@ -158,4 +154,3 @@ app.post("/api/rename", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`[Aliya Official V4 Server Running on Port ${PORT}]`));
-                      
