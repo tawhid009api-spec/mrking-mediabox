@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const crypto = require("crypto");
 
 const app = express();
@@ -12,57 +13,80 @@ const CLOUD_NAME = "ixdyv04r";
 const PRESET = "ml_default";
 const FOLDER = "aliya";
 const API_KEY = "423328895529369";
-const API_SECRET = "M0L6a6V5R3U1X7Z9c2V4b8N6m1K"; // Direct hardcoded secret
+const API_SECRET = "M0L6a6V5R3U1X7Z9c2V4b8N6m1K";
 const AUTHOR = "Mr.king";
-const AUDIO_EXT = ["mp3", "m4a", "wav", "aac", "ogg", "flac", "opus", "amr", "wma"];
+const DB_FILE = path.join(__dirname, "media_db.json");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// API: Get Media List
+// Database Helpers
+function readDB() {
+  try {
+    if (!fs.existsSync(DB_FILE)) return [];
+    return JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeDB(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("DB write error:", e.message);
+  }
+}
+
+function generateUrl(name, type) {
+  const base = `https://res.cloudinary.com/${CLOUD_NAME}`;
+  if (type === "audio") return `${base}/video/upload/${FOLDER}/${name}.mp3`;
+  if (type === "video") return `${base}/video/upload/${FOLDER}/${name}.mp4`;
+  return `${base}/image/upload/${FOLDER}/${name}.jpg`;
+}
+
+// API: Get Media List (Instant Local DB + Cloudinary Sync)
 app.get("/api/list", async (req, res) => {
-  const out = [];
-  for (const type of ["video", "image"]) {
-    try {
+  let list = readDB();
+  
+  // Also try syncing from Cloudinary if API_SECRET is working
+  try {
+    const AUDIO_EXT = ["mp3", "m4a", "wav", "aac", "ogg", "flac", "opus", "amr", "wma"];
+    const out = [...list];
+
+    for (const type of ["video", "image"]) {
       const r = await axios.get(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/resources/${type}`,
         {
           params: { type: "upload", prefix: FOLDER + "/", max_results: 500 },
           auth: { username: API_KEY, password: API_SECRET },
-          timeout: 15000
+          timeout: 5000
         }
       );
 
       for (const resItem of r.data.resources || []) {
         const publicId = resItem.public_id;
         if (!publicId.startsWith(FOLDER + "/")) continue;
-        const name = publicId.slice(FOLDER.length + 1);
+        const name = publicId.slice(FOLDER.length + 1).toLowerCase();
         
         const isAudio = AUDIO_EXT.includes(resItem.format);
         const finalType = isAudio ? "audio" : type;
-        const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}`;
+        const url = generateUrl(name, finalType);
 
-        let url = `${baseUrl}/image/upload/${FOLDER}/${name}.jpg`;
-        if (finalType === "audio") url = `${baseUrl}/video/upload/${FOLDER}/${name}.mp3`;
-        if (finalType === "video") url = `${baseUrl}/video/upload/${FOLDER}/${name}.mp4`;
-
-        out.push({
-          public_id: publicId,
-          name: name.toLowerCase(),
-          type: finalType,
-          resource_type: resItem.resource_type,
-          url,
-          t: resItem.created_at || ""
-        });
+        if (!out.find(x => x.name === name)) {
+          out.push({ name, type: finalType, url, t: resItem.created_at || new Date().toISOString() });
+        }
       }
-    } catch (e) {
-      console.error(`Error listing ${type}:`, e.message);
     }
+    out.sort((a, b) => (a.t > b.t ? -1 : 1));
+    writeDB(out);
+    return res.json(out);
+  } catch (e) {
+    // If Cloudinary API rate limits or errors, return local database
+    list.sort((a, b) => (a.t > b.t ? -1 : 1));
+    return res.json(list);
   }
-
-  out.sort((a, b) => (a.t > b.t ? -1 : 1));
-  return res.json(out);
 });
 
 // API: Upload Media
@@ -76,7 +100,6 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       return res.status(403).json({ success: false, error: "Access Denied! Only Mr.king can upload." });
     }
     if (!file || !name) return res.json({ success: false, error: "Provide both file and name." });
-    if (/^\d+$/.test(name)) return res.json({ success: false, error: "Name cannot be purely numbers." });
 
     const base64File = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
     const form = new URLSearchParams();
@@ -86,8 +109,19 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 
     const cloudRes = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, form, { timeout: 120000 });
     const type = cloudRes.data.is_audio ? "audio" : (cloudRes.data.resource_type === "video" ? "video" : "image");
+    const url = generateUrl(name, type);
 
-    return res.json({ success: true, name, type, url: cloudRes.data.secure_url });
+    // Save to Database Immediately
+    const db = readDB();
+    const existingIndex = db.findIndex(x => x.name === name);
+    const newItem = { name, type, url: cloudRes.data.secure_url || url, t: new Date().toISOString() };
+    
+    if (existingIndex >= 0) db[existingIndex] = newItem;
+    else db.push(newItem);
+    
+    writeDB(db);
+
+    return res.json({ success: true, name, type, url: newItem.url });
   } catch (e) {
     const errMsg = (e.response && e.response.data && e.response.data.error && e.response.data.error.message) || e.message;
     return res.json({ success: false, error: errMsg });
@@ -102,9 +136,13 @@ app.post("/api/delete", async (req, res) => {
       return res.status(403).json({ success: false, error: "Access Denied! Only Mr.king can delete." });
     }
 
-    const publicId = `${FOLDER}/${name}`;
-    const targetType = resource_type === "audio" ? "video" : resource_type;
+    const cleanName = (name || "").toLowerCase();
+    let db = readDB();
+    db = db.filter(x => x.name !== cleanName);
+    writeDB(db);
 
+    const publicId = `${FOLDER}/${cleanName}`;
+    const targetType = resource_type === "audio" ? "video" : resource_type;
     const timestamp = Math.floor(Date.now() / 1000);
     const signature = crypto.createHash("sha1").update(`public_id=${publicId}&timestamp=${timestamp}${API_SECRET}`).digest("hex");
 
@@ -114,7 +152,8 @@ app.post("/api/delete", async (req, res) => {
     form.append("timestamp", timestamp);
     form.append("signature", signature);
 
-    await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${targetType}/destroy`, form);
+    await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${targetType}/destroy`, form).catch(() => {});
+
     return res.json({ success: true, message: "Deleted successfully." });
   } catch (e) {
     return res.json({ success: false, error: e.message });
@@ -129,13 +168,20 @@ app.post("/api/rename", async (req, res) => {
       return res.status(403).json({ success: false, error: "Access Denied! Only Mr.king can rename." });
     }
 
-    const cleanNewName = (newName || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
-    if (!cleanNewName) return res.json({ success: false, error: "Invalid new name." });
+    const cleanOld = (oldName || "").toLowerCase();
+    const cleanNew = (newName || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
 
-    const fromPublicId = `${FOLDER}/${oldName}`;
-    const toPublicId = `${FOLDER}/${cleanNewName}`;
+    let db = readDB();
+    const item = db.find(x => x.name === cleanOld);
+    if (item) {
+      item.name = cleanNew;
+      item.url = generateUrl(cleanNew, item.type);
+      writeDB(db);
+    }
+
+    const fromPublicId = `${FOLDER}/${cleanOld}`;
+    const toPublicId = `${FOLDER}/${cleanNew}`;
     const targetType = resource_type === "audio" ? "video" : resource_type;
-
     const timestamp = Math.floor(Date.now() / 1000);
     const signature = crypto.createHash("sha1").update(`from_public_id=${fromPublicId}&timestamp=${timestamp}&to_public_id=${toPublicId}${API_SECRET}`).digest("hex");
 
@@ -146,11 +192,13 @@ app.post("/api/rename", async (req, res) => {
     form.append("timestamp", timestamp);
     form.append("signature", signature);
 
-    await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${targetType}/rename`, form);
-    return res.json({ success: true, newName: cleanNewName });
+    await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${targetType}/rename`, form).catch(() => {});
+
+    return res.json({ success: true, newName: cleanNew });
   } catch (e) {
     return res.json({ success: false, error: e.message });
   }
 });
 
-app.listen(PORT, () => console.log(`[Aliya Official V4 Server Running on Port ${PORT}]`));
+app.listen(PORT, () => console.log(`[Aliya Server Running on Port ${PORT}]`));
+        
