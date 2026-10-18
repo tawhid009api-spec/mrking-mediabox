@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aliya Official V4 🦋 | Mr.king</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+    body {
+      background: #060913;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 15px;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(147, 51, 234, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    
+    header {
+      text-align: center;
+      padding: 25px 15px;
+      margin-bottom: 25px;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .brand-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .sub-title {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    .grid-layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+    @media (max-width: 850px) { .grid-layout { grid-template-columns: 1fr; } }
+
+    .card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title i { color: #a855f7; }
+
+    .form-group { margin-bottom: 14px; }
+    label { font-size: 0.8rem; color: #a1a1aa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+    input[type="text"], input[type="password"], input[type="file"] {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-radius: 12px;
+      outline: none;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+    input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6); }
+
+    #status { margin-top: 12px; font-size: 0.85rem; font-weight: 600; text-align: center; word-break: break-all; }
+
+    .search-box {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
+      max-height: 650px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    .media-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s;
+    }
+    .media-card:hover { border-color: #a855f7; transform: translateY(-3px); }
+
+    .media-preview {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #000;
+      margin-bottom: 10px;
+    }
+    audio { width: 100%; height: 36px; margin-bottom: 10px; }
+
+    .media-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .media-name { font-weight: 700; font-size: 0.9rem; color: #f8fafc; word-break: break-all; }
+    .badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .act-btn {
+      padding: 7px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+    .btn-copy { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .btn-copy:hover { background: rgba(59, 130, 246, 0.4); }
+    .btn-edit { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .btn-edit:hover { background: rgba(234, 179, 8, 0.4); }
+    .btn-del { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); grid-column: span 2; }
+    .btn-del:hover { background: rgba(239, 68, 68, 0.4); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-title">Aliya Official V4 🦋</div>
+      <div class="sub-title">Owner & Managed by Mr.king</div>
+    </header>
+
+    <div class="grid-layout">
+      <!-- Author Upload Panel -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Center</div>
+        <form id="uploadForm">
+          <div class="form-group">
+            <label>Author Key</label>
+            <input type="password" id="authorToken" placeholder="Enter Mr.king Key..." required>
+          </div>
+          <div class="form-group">
+            <label>Media Name</label>
+            <input type="text" id="customName" placeholder="e.g. video1, song1" required>
+          </div>
+          <div class="form-group">
+            <label>Choose File</label>
+            <input type="file" id="mediaFile" accept="image/*,video/*,audio/*" required>
+          </div>
+          <button type="submit" class="btn-submit" id="uploadBtn">Upload Media</button>
+        </form>
+        <div id="status"></div>
+      </div>
+
+      <!-- Vault Directory -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-photo-film"></i> Public Vault Library</div>
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search vault files..." onkeyup="filterMedia()">
+        <div id="mediaList" class="media-grid">
+          <p style="text-align:center; color:#64748b; grid-column: 1/-1;">Loading library items...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let mediaList = [];
+
+    async function loadList() {
+      const listDiv = document.getElementById('mediaList');
+      try {
+        const res = await fetch('/api/list');
+        mediaList = await res.json();
+        renderList(mediaList);
+      } catch (e) {
+        listDiv.innerHTML = '<p style="color:#f87171; text-align:center; grid-column: 1/-1;">Failed to load media vault.</p>';
+      }
+    }
+
+    function renderList(data) {
+      const listDiv = document.getElementById('mediaList');
+      if (!data.length) {
+        listDiv.innerHTML = '<p style="color:#64748b; text-align:center; grid-column: 1/-1;">Vault is empty.</p>';
+        return;
+      }
+
+      listDiv.innerHTML = data.map(item => {
+        let preview = '';
+        if (item.type === 'image') preview = `<img src="${item.url}" class="media-preview" loading="lazy">`;
+        else if (item.type === 'video') preview = `<video src="${item.url}" class="media-preview" controls preload="none"></video>`;
+        else preview = `<audio src="${item.url}" controls preload="none"></audio>`;
+
+        return `
+          <div class="media-card">
+            <div>
+              <div class="media-info">
+                <span class="media-name">${item.name}</span>
+                <span class="badge">${item.type}</span>
+              </div>
+              ${preview}
+            </div>
+            <div class="action-grid">
+              <button onclick="copyLink('${item.url}')" class="act-btn btn-copy"><i class="fa-solid fa-copy"></i> Copy Link</button>
+              <button onclick="renameItem('${item.name}', '${item.type}')" class="act-btn btn-edit"><i class="fa-solid fa-pen"></i> Rename</button>
+              <button onclick="deleteItem('${item.name}', '${item.type}')" class="act-btn btn-del"><i class="fa-solid fa-trash"></i> Delete Item</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterMedia() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      renderList(mediaList.filter(x => x.name.toLowerCase().includes(query)));
+    }
+
+    function copyLink(url) {
+      navigator.clipboard.writeText(url);
+      alert("✅ Link copied to clipboard!");
+    }
+
+    async function deleteItem(name, type) {
+      const author = prompt("🔐 Enter Mr.king Author Token to DELETE:");
+      if (!author) return;
+
+      if (confirm(`Are you sure you want to delete '${name}'?`)) {
+        const res = await fetch('/api/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, resource_type: type, author })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("🗑️ Item deleted successfully!");
+          loadList();
+        } else alert("❌ Error: " + data.error);
+      }
+    }
+
+    async function renameItem(oldName, type) {
+      const author = prompt("🔐 Enter Mr.king Author Token to RENAME:");
+      if (!author) return;
+
+      const newName = prompt(`Enter new name for '${oldName}':`);
+      if (!newName) return;
+
+      const res = await fetch('/api/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldName, newName, resource_type: type, author })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("✏️ Item renamed successfully to " + data.newName);
+        loadList();
+      } else alert("❌ Error: " + data.error);
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const author = document.getElementById('authorToken').value;
+      const name = document.getElementById('customName').value;
+      const fileInput = document.getElementById('mediaFile');
+      const status = document.getElementById('status');
+      const btn = document.getElementById('uploadBtn');
+
+      if (author !== "Mr.king") {
+        status.style.color = '#f87171';
+        status.innerText = "❌ Only 'Mr.king' can upload files!";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('author', author);
+      formData.append('name', name);
+      formData.append('file', fileInput.files[0]);
+
+      btn.disabled = true;
+      status.style.color = '#38bdf8';
+      status.innerText = "⏳ Uploading, please wait...";
+
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          status.style.color = '#4ade80';
+          status.innerText = `✅ Uploaded: ${result.name} (${result.type})`;
+          document.getElementById('customName').value = '';
+          fileInput.value = '';
+          loadList();
+        } else {
+          status.style.color = '#f87171';
+          status.innerText = '❌ ' + result.error;
+        }
+      } catch (e) {
+        status.style.color = '#f87171';
+        status.innerText = "❌ Network error during upload.";
+      }
+      btn.disabled = false;
+    });
+
+    loadList();
+  </script>
+</body>
+</html>
+
