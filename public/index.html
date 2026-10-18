@@ -310,29 +310,48 @@
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const author = document.getElementById('authorToken').value;
-      const name = document.getElementById('customName').value;
       const fileInput = document.getElementById('mediaFile');
       const status = document.getElementById('status');
       const btn = document.getElementById('uploadBtn');
 
-      if (author !== "Mr.king") {
+      const clean = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+      const name = clean(document.getElementById('customName').value);
+      if (!name) {
         status.style.color = '#f87171';
-        status.innerText = "❌ Only 'Mr.king' can upload files!";
+        status.innerText = "❌ Provide a valid name.";
+        return;
+      }
+      if (!fileInput.files[0]) {
+        status.style.color = '#f87171';
+        status.innerText = "❌ Choose a file.";
         return;
       }
 
-      const formData = new FormData();
-      formData.append('author', author);
-      formData.append('name', name);
-      formData.append('file', fileInput.files[0]);
-
       btn.disabled = true;
       status.style.color = '#38bdf8';
-      status.innerText = "⏳ Uploading, please wait...";
+      status.innerText = "⏳ Uploading directly, please wait...";
 
       try {
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
-        const result = await res.json();
+        const cloudForm = new FormData();
+        cloudForm.append('file', fileInput.files[0]);
+        cloudForm.append('upload_preset', 'Aliya_1290');
+        cloudForm.append('public_id', 'aliya/' + name);
+        const cloudRes = await fetch('https://api.cloudinary.com/v1_1/j7sw9npl/auto/upload', { method: 'POST', body: cloudForm });
+        const cloud = await cloudRes.json();
+        if (cloud.error) throw new Error(cloud.error.message);
+
+        const regRes = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            author: author,
+            name: name,
+            type: cloud.is_audio ? 'audio' : (cloud.resource_type === 'video' ? 'video' : 'image'),
+            url: cloud.secure_url,
+            public_id: cloud.public_id
+          })
+        });
+        const result = await regRes.json();
         if (result.success) {
           status.style.color = '#4ade80';
           status.innerText = `✅ Uploaded: ${result.name} (${result.type})`;
@@ -341,11 +360,11 @@
           loadList();
         } else {
           status.style.color = '#f87171';
-          status.innerText = '❌ ' + result.error;
+          status.innerText = '❌' + result.error;
         }
-      } catch (e) {
+      } catch (err) {
         status.style.color = '#f87171';
-        status.innerText = "❌ Network error during upload.";
+        status.innerText = '❌' + (err.message || 'Network error during upload.');
       }
       btn.disabled = false;
     });
