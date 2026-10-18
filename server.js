@@ -26,11 +26,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Cache Object for Fast Responses
 let listCache = { time: 0, data: [] };
 
 async function fetchAllResourcesFast() {
-  // Return cached data if under 30 seconds
   if (Date.now() - listCache.time < 30000 && listCache.data.length > 0) {
     return listCache.data;
   }
@@ -56,17 +54,22 @@ async function fetchAllResourcesFast() {
     if (!resObj) continue;
     const { acc, type, resources } = resObj;
     for (const resItem of resources) {
-      const name = resItem.public_id.slice(FOLDER.length + 1);
+      const publicId = resItem.public_id;
+      // Extract exact filename after folder prefix
+      if (!publicId.startsWith(FOLDER + "/")) continue;
+      const name = publicId.slice(FOLDER.length + 1);
+      
       const isAudio = AUDIO_EXT.includes(resItem.format);
       const finalType = isAudio ? "audio" : type;
       const baseUrl = `https://res.cloudinary.com/${acc.cloudName}`;
+      
       let url = `${baseUrl}/image/upload/${FOLDER}/${name}.jpg`;
       if (finalType === "audio") url = `${baseUrl}/video/upload/${FOLDER}/${name}.mp3`;
       if (finalType === "video") url = `${baseUrl}/video/upload/${FOLDER}/${name}.mp4`;
 
       out.push({
-        public_id: resItem.public_id,
-        name,
+        public_id: publicId,
+        name: name.toLowerCase(),
         type: finalType,
         resource_type: resItem.resource_type,
         url,
@@ -86,7 +89,6 @@ app.get("/api/list", async (req, res) => {
   return res.json(list);
 });
 
-// Clear cache on upload/delete/rename
 function invalidateCache() {
   listCache = { time: 0, data: [] };
 }
@@ -97,8 +99,9 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     const name = (req.body.name || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
     const authorToken = req.body.author || "";
 
-    if (authorToken !== AUTHOR) return res.status(403).json({ success: false, error: "Access Denied!" });
-    if (!file || !name) return res.json({ success: false, error: "Missing required fields." });
+    if (authorToken !== AUTHOR) return res.status(403).json({ success: false, error: "Access Denied! Only Mr.king can upload." });
+    if (!file || !name) return res.json({ success: false, error: "Provide both file and name." });
+    if (/^\d+$/.test(name)) return res.json({ success: false, error: "Name cannot be purely numbers." });
 
     const base64File = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
     const acc = CLOUD_ACCOUNTS[0];
@@ -150,6 +153,8 @@ app.post("/api/rename", async (req, res) => {
     if (author !== AUTHOR) return res.status(403).json({ success: false, error: "Access Denied!" });
 
     const cleanNewName = (newName || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+    if (!cleanNewName) return res.json({ success: false, error: "Invalid new name." });
+
     const fromPublicId = `${FOLDER}/${oldName}`;
     const toPublicId = `${FOLDER}/${cleanNewName}`;
     const targetType = resource_type === "audio" ? "video" : resource_type;
@@ -173,4 +178,5 @@ app.post("/api/rename", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`[Aliya Fast Server Running on Port ${PORT}]`));
+app.listen(PORT, () => console.log(`[Aliya Official V4 Server Running on Port ${PORT}]`));
+        
