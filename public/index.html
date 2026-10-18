@@ -35,14 +35,8 @@
       background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: -0.5px;
     }
-    .sub-title {
-      font-size: 0.95rem;
-      color: #94a3b8;
-      margin-top: 6px;
-      font-weight: 500;
-    }
+    .sub-title { font-size: 0.95rem; color: #94a3b8; margin-top: 6px; font-weight: 500; }
 
     .grid-layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
     @media (max-width: 850px) { .grid-layout { grid-template-columns: 1fr; } }
@@ -67,7 +61,7 @@
     .card-title i { color: #a855f7; }
 
     .form-group { margin-bottom: 14px; }
-    label { font-size: 0.8rem; color: #a1a1aa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+    label { font-size: 0.8rem; color: #a1a1aa; font-weight: 600; text-transform: uppercase; display: block; margin-bottom: 6px; }
     input[type="text"], input[type="password"], input[type="file"] {
       width: 100%;
       padding: 12px 14px;
@@ -187,7 +181,7 @@
     </header>
 
     <div class="grid-layout">
-      <!-- Author Upload Panel -->
+      <!-- Upload Panel -->
       <div class="card">
         <div class="card-title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Center</div>
         <form id="uploadForm">
@@ -227,7 +221,7 @@
       try {
         const res = await fetch('/api/list');
         mediaList = await res.json();
-        renderList(mediaList);
+        filterMedia();
       } catch (e) {
         listDiv.innerHTML = '<p style="color:#f87171; text-align:center; grid-column: 1/-1;">Failed to load media vault.</p>';
       }
@@ -266,8 +260,9 @@
     }
 
     function filterMedia() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      renderList(mediaList.filter(x => x.name.toLowerCase().includes(query)));
+      const query = (document.getElementById('searchInput').value || "").toLowerCase().trim();
+      const filtered = query ? mediaList.filter(x => x.name.toLowerCase().includes(query)) : mediaList;
+      renderList(filtered);
     }
 
     function copyLink(url) {
@@ -359,4 +354,3 @@
   </script>
 </body>
 </html>
-
